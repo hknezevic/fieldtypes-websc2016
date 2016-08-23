@@ -27,5 +27,16 @@ _ezpublishPlatformUIRoutes:
 _ezplatformRepositoryFormsRoutes:
     resource: "@EzSystemsRepositoryFormsBundle/Resources/config/routing.yml"
 
+app.submitted:
+    path: /contact/submitted
+    defaults:
+        _controller: app.controller.contactform:submittedAction
+        template: full/contact_form_submitted.html.twig
+    methods: [GET]
+
+_contentOnTheFly:
+    resource: "@ContentOnTheFlyBundle/Resources/config/routing.yml"
+    prefix:   '%ezpublish_rest.path_prefix%'
+
 _ezpublishLegacyRoutes:
     resource: "@EzPublishLegacyBundle/Resources/config/routing.yml"
