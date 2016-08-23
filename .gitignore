@@ -9,6 +9,7 @@
 /app/cache/
 /app/logs/
 /ezpublish_legacy
+!/ezpublish_legacy/config.php
 !/ezpublish_legacy/settings/override/*
 !/ezpublish_legacy/settings/siteaccess/admin/*
 /app/config/parameters.yml
