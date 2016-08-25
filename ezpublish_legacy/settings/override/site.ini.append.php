@@ -19,6 +19,7 @@ ActiveExtensions[]=ezdemo
 ActiveExtensions[]=ezjscore
 ActiveExtensions[]=ezoe
 ActiveExtensions[]=eztags
+ActiveExtensions[]=ezgmaplocation
 
 [Session]
 SessionNameHandler=custom
