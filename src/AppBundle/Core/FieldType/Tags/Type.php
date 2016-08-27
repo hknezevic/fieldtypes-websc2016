@@ -5,8 +5,11 @@ namespace AppBundle\Core\FieldType\Tags;
 use AppBundle\API\Repository\Values\Tags\Tag;
 use eZ\Publish\Core\FieldType\FieldType;
 use eZ\Publish\Core\FieldType\Value as BaseValue;
+use eZ\Publish\SPI\Persistence\Content\FieldValue;
 use eZ\Publish\SPI\FieldType\Value as SPIValue;
 use eZ\Publish\Core\Base\Exceptions\InvalidArgumentType;
+use eZ\Publish\Core\FieldType\ValidationError;
+use eZ\Publish\API\Repository\Exceptions\NotFoundException;
 use DateTime;
 /**
  * Tags field type.
@@ -15,6 +18,52 @@ use DateTime;
  */
 class Type extends FieldType
 {
+    /**
+     * Default edit view interface for content field.
+     */
+    const EDIT_VIEW_DEFAULT_VALUE = 'Default';
+
+    /**
+     * List of settings available for this FieldType.
+     *
+     * The key is the setting name, and the value is the default value for this setting
+     *
+     * @var array
+     */
+    protected $settingsSchema = array(
+        'subTreeLimit' => array(
+            'type' => 'int',
+            'default' => 0,
+        ),
+        'hideRootTag' => array(
+            'type' => 'boolean',
+            'default' => false,
+        ),
+        'maxTags' => array(
+            'type' => 'int',
+            'default' => 0,
+        ),
+        'editView' => array(
+            'type' => 'string',
+            'default' => self::EDIT_VIEW_DEFAULT_VALUE,
+        ),
+    );
+
+    /**
+     * @var array
+     */
+    protected $availableEditViews = array();
+
+    /**
+     * Sets the available edit views.
+     *
+     * @param array $availableEditViews
+     */
+    public function setEditViews(array $availableEditViews)
+    {
+        $this->availableEditViews = $availableEditViews;
+    }
+
     /**
      * Returns the field type identifier for this field type.
      *
@@ -192,6 +241,154 @@ class Type extends FieldType
     protected function getSortInfo(BaseValue $value)
     {
         return false;
+    }
+
+    /**
+     * Converts a $value to a persistence value.
+     *
+     * @param \AppBundle\Core\FieldType\Tags\Value $value
+     *
+     * @return \eZ\Publish\SPI\Persistence\Content\FieldValue
+     */
+    public function toPersistenceValue(SPIValue $value)
+    {
+        return new FieldValue(
+            array(
+                'data' => null,
+                'externalData' => $this->toHash($value),
+                'sortKey' => $this->getSortInfo($value),
+            )
+        );
+    }
+
+    /**
+     * Converts a persistence $fieldValue to a Value.
+     *
+     * @param \eZ\Publish\SPI\Persistence\Content\FieldValue $fieldValue
+     *
+     * @return \AppBundle\Core\FieldType\Tags\Value
+     */
+    public function fromPersistenceValue(FieldValue $fieldValue)
+    {
+        return $this->fromHash($fieldValue->externalData);
+    }
+
+    /**
+     * Validates the fieldSettings of a FieldDefinitionCreateStruct or FieldDefinitionUpdateStruct.
+     *
+     * @param mixed $fieldSettings
+     *
+     * @return \eZ\Publish\SPI\FieldType\ValidationError[]
+     */
+    public function validateFieldSettings($fieldSettings)
+    {
+        $validationErrors = array();
+
+        if (!is_array($fieldSettings)) {
+            $validationErrors[] = new ValidationError('Field settings must be in form of an array');
+
+            return $validationErrors;
+        }
+
+        foreach ($fieldSettings as $name => $value) {
+            if (!isset($this->settingsSchema[$name])) {
+                $validationErrors[] = new ValidationError(
+                    "Setting '%setting%' is unknown",
+                    null,
+                    array(
+                        'setting' => $name,
+                    )
+                );
+                continue;
+            }
+
+            switch ($name) {
+                case 'subTreeLimit':
+                    if (!is_integer($value)) {
+                        $validationErrors[] = new ValidationError(
+                            "Setting '%setting%' value must be of integer type",
+                            null,
+                            array(
+                                'setting' => $name,
+                            )
+                        );
+                    }
+
+                    if ($value < 0) {
+                        $validationErrors[] = new ValidationError(
+                            "Setting '%setting%' value must be equal or larger than 0",
+                            null,
+                            array(
+                                'setting' => $name,
+                            )
+                        );
+                    }
+                    break;
+                case 'hideRootTag':
+                    if (!is_bool($value)) {
+                        $validationErrors[] = new ValidationError(
+                            "Setting '%setting%' value must be of boolean type",
+                            null,
+                            array(
+                                'setting' => $name,
+                            )
+                        );
+                    }
+                    break;
+                case 'maxTags':
+                    if (!is_integer($value)) {
+                        $validationErrors[] = new ValidationError(
+                            "Setting '%setting%' value must be of integer type",
+                            null,
+                            array(
+                                'setting' => $name,
+                            )
+                        );
+                    }
+
+                    if ($value < 0) {
+                        $validationErrors[] = new ValidationError(
+                            "Setting '%setting%' value must be equal or larger than 0",
+                            null,
+                            array(
+                                'setting' => $name,
+                            )
+                        );
+                    }
+                    break;
+                case 'editView':
+                    if (!is_string($value)) {
+                        $validationErrors[] = new ValidationError(
+                            "Setting '%setting%' value must be of string type",
+                            null,
+                            array(
+                                'setting' => $name,
+                            )
+                        );
+                    }
+
+                    $editViewExists = false;
+                    foreach ($this->availableEditViews as $editView) {
+                        if ($editView['identifier'] === $value) {
+                            $editViewExists = true;
+                            break;
+                        }
+                    }
+
+                    if (!$editViewExists) {
+                        $validationErrors[] = new ValidationError(
+                            "Edit view '%editView%' does not exist",
+                            null,
+                            array(
+                                'editView' => $value,
+                            )
+                        );
+                    }
+                    break;
+            }
+        }
+
+        return $validationErrors;
     }
 
     /**
