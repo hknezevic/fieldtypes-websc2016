@@ -3,6 +3,7 @@
 namespace AppBundle\Core\FieldType\Tags;
 
 use AppBundle\API\Repository\Values\Tags\Tag;
+use AppBundle\Core\Repository\TagsService;
 use eZ\Publish\Core\FieldType\FieldType;
 use eZ\Publish\Core\FieldType\Value as BaseValue;
 use eZ\Publish\SPI\Persistence\Content\FieldValue;
@@ -50,9 +51,22 @@ class Type extends FieldType
     );
 
     /**
+     * @var \AppBundle\API\Repository\TagsService
+     */
+    protected $tagsService;
+
+    /**
      * @var array
      */
     protected $availableEditViews = array();
+
+    /**
+     * @param \AppBundle\API\Repository\TagsService $tagsService
+     */
+    public function __construct(TagsService $tagsService)
+    {
+        $this->tagsService = $tagsService;
+    }
 
     /**
      * Sets the available edit views.
@@ -322,6 +336,20 @@ class Type extends FieldType
                                 'setting' => $name,
                             )
                         );
+                    }
+
+                    if ($value > 0) {
+                        try {
+                            $this->tagsService->loadTag($value);
+                        } catch (NotFoundException $e) {
+                            $validationErrors[] = new ValidationError(
+                                "Setting '%setting%' value must be an existing tag ID",
+                                null,
+                                array(
+                                    'setting' => $name,
+                                )
+                            );
+                        }
                     }
                     break;
                 case 'hideRootTag':
