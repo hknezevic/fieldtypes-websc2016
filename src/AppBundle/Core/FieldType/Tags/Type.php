@@ -5,6 +5,8 @@ namespace AppBundle\Core\FieldType\Tags;
 use eZ\Publish\Core\FieldType\FieldType;
 use eZ\Publish\Core\FieldType\Value as BaseValue;
 use eZ\Publish\SPI\FieldType\Value as SPIValue;
+use eZ\Publish\Core\Base\Exceptions\InvalidArgumentType;
+use DateTime;
 /**
  * Tags field type.
  *
@@ -19,6 +21,7 @@ class Type extends FieldType
      */
     public function getFieldTypeIdentifier()
     {
+        return 'eztags';
     }
 
     /**
@@ -30,6 +33,7 @@ class Type extends FieldType
      */
     public function getName(SPIValue $value)
     {
+        return (string)$value;
     }
 
     /**
@@ -39,6 +43,7 @@ class Type extends FieldType
      */
     public function getEmptyValue()
     {
+        return new Value();
     }
 
     /**
@@ -50,6 +55,7 @@ class Type extends FieldType
      */
     public function isEmptyValue(SPIValue $value)
     {
+        return $value === null || $value->tags == $this->getEmptyValue()->tags;
     }
 
     /**
@@ -61,6 +67,17 @@ class Type extends FieldType
      */
     protected function createValueFromInput($inputValue)
     {
+        if (is_array($inputValue)) {
+            foreach ($inputValue as $inputValueItem) {
+                if (!$inputValueItem instanceof Tag) {
+                    return $inputValue;
+                }
+            }
+
+            $inputValue = new Value($inputValue);
+        }
+
+        return $inputValue;
     }
 
     /**
@@ -72,6 +89,23 @@ class Type extends FieldType
      */
     protected function checkValueStructure(BaseValue $value)
     {
+        if (!is_array($value->tags)) {
+            throw new InvalidArgumentType(
+                '$value->tags',
+                'array',
+                $value->tags
+            );
+        }
+
+        foreach ($value->tags as $tag) {
+            if (!$tag instanceof Tag) {
+                throw new InvalidArgumentType(
+                    "$tag",
+                    'AppBundle\\Core\\FieldType\\Tags\\Value',
+                    $tag
+                );
+            }
+        }
     }
 
     /**
@@ -83,6 +117,38 @@ class Type extends FieldType
      */
     public function fromHash($hash)
     {
+        if (!is_array($hash)) {
+            return new Value();
+        }
+
+        $tags = array();
+
+        foreach ($hash as $hashItem) {
+            if (!is_array($hashItem)) {
+                continue;
+            }
+
+            $modificationDate = new DateTime();
+            $modificationDate->setTimestamp($hashItem['modified']);
+
+            $tags[] = new Tag(
+                array(
+                    'id' => $hashItem['id'],
+                    'parentTagId' => $hashItem['parent_id'],
+                    'mainTagId' => $hashItem['main_tag_id'],
+                    'keywords' => $hashItem['keywords'],
+                    'depth' => $hashItem['depth'],
+                    'pathString' => $hashItem['path_string'],
+                    'modificationDate' => $modificationDate,
+                    'remoteId' => $hashItem['remote_id'],
+                    'alwaysAvailable' => $hashItem['always_available'],
+                    'mainLanguageCode' => $hashItem['main_language_code'],
+                    'languageCodes' => $hashItem['language_codes'],
+                )
+            );
+        }
+
+        return new Value($tags);
     }
 
     /**
@@ -94,5 +160,46 @@ class Type extends FieldType
      */
     public function toHash(SPIValue $value)
     {
+        $hash = array();
+
+        foreach ($value->tags as $tag) {
+            $hash[] = array(
+                'id' => $tag->id,
+                'parent_id' => $tag->parentTagId,
+                'main_tag_id' => $tag->mainTagId,
+                'keywords' => $tag->keywords,
+                'depth' => $tag->depth,
+                'path_string' => $tag->pathString,
+                'modified' => $tag->modificationDate->getTimestamp(),
+                'remote_id' => $tag->remoteId,
+                'always_available' => $tag->alwaysAvailable,
+                'main_language_code' => $tag->mainLanguageCode,
+                'language_codes' => $tag->languageCodes,
+            );
+        }
+
+        return $hash;
+    }
+
+    /**
+     * Returns information for FieldValue->$sortKey relevant to the field type.
+     *
+     * @param \AppBundle\Core\FieldType\Tags\Value $value
+     *
+     * @return bool
+     */
+    protected function getSortInfo(BaseValue $value)
+    {
+        return false;
+    }
+
+    /**
+     * Returns whether the field type is searchable.
+     *
+     * @return bool
+     */
+    public function isSearchable()
+    {
+        return true;
     }
 }
