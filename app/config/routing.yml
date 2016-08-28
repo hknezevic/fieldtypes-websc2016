@@ -40,3 +40,6 @@ _contentOnTheFly:
 
 _ezpublishLegacyRoutes:
     resource: "@EzPublishLegacyBundle/Resources/config/routing.yml"
+
+_eztagsRoutes:
+    resource: "@NetgenTagsBundle/Resources/config/routing.yml"

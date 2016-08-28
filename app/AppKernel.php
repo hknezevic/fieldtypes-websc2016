@@ -50,6 +50,7 @@ class AppKernel extends Kernel
             new EzSystems\PlatformUISearchPrototypeBundle\EzSystemsPlatformUISearchPrototypeBundle(),
             new EzSystems\EzContentOnTheFlyBundle\EzSystemsEzContentOnTheFlyBundle(),
             new eZ\Bundle\EzPublishLegacyBundle\EzPublishLegacyBundle($this),
+            new Netgen\TagsBundle\NetgenTagsBundle(),
             new AppBundle\AppBundle()
         );
 
