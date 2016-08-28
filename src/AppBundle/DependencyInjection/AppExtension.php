@@ -30,5 +30,15 @@ class AppExtension extends Extension implements PrependExtensionInterface
 
     public function prepend(ContainerBuilder $container)
     {
+        $configs = array(
+            'ezpublish.yml' => 'ezpublish',
+        );
+
+        foreach ($configs as $fileName => $extensionName) {
+            $configFile = __DIR__ . '/../Resources/config/' . $fileName;
+            $config = Yaml::parse(file_get_contents($configFile));
+            $container->prependExtensionConfig($extensionName, $config);
+            $container->addResource(new FileResource($configFile));
+        }
     }
 }

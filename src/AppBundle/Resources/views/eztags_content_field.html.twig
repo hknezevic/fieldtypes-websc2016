@@ -1,0 +1,9 @@
+{% block eztags_field %}
+{% spaceless %}
+    <ul>
+        {% for tag in field.value.tags %}
+            <li>{{ tag.keyword }}</li>
+        {% endfor %}
+    </ul>
+{% endspaceless %}
+{% endblock %}
