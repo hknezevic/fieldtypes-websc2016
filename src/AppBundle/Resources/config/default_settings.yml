@@ -1,0 +1,3 @@
+parameters:
+    # Setting that will hold all available edit views
+    eztags.default.edit_views: {}

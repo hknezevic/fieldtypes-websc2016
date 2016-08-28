@@ -22,6 +22,10 @@ class AppExtension extends Extension implements PrependExtensionInterface
             new FileLocator(__DIR__ . '/../Resources/config')
         );
         $loader->load('services.yml');
+        $loader->load('fieldtypes.yml');
+        $loader->load('default_settings.yml');
+        $loader->load('papi.yml');
+        $loader->load('storage_engines/legacy.yml');
     }
 
     public function prepend(ContainerBuilder $container)

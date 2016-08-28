@@ -1,0 +1,9 @@
+parameters:
+    ezpublish.api.service.tags.inner.class: AppBundle\Core\Repository\TagsService
+
+services:
+    ezpublish.api.service.tags:
+        alias: ezpublish.api.service.tags.inner
+
+    ezpublish.api.service.tags.inner:
+        class: %ezpublish.api.service.tags.inner.class%
